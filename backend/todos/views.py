@@ -1,3 +1,5 @@
+import logging
+
 from django.db import transaction
 from django.db.models import Q
 from rest_framework import viewsets
@@ -9,9 +11,20 @@ from .models import Task
 from .serializers import TaskSerializer
 
 
+logger = logging.getLogger(__name__)
+
+
+def _dispatch(user_id, message):
+    try:
+        create_notification.delay(user_id, message)
+    except Exception:  # Redis/broker ishlamasa ham API 500 bermasin
+        logger.warning("Celery broker unavailable, creating notification synchronously")
+        create_notification(user_id, message)
+
+
 def notify(user_id, message):
     """Task commit bo'lgandan keyingina Celery'ga yuboriladi."""
-    transaction.on_commit(lambda: create_notification.delay(user_id, message))
+    transaction.on_commit(lambda: _dispatch(user_id, message))
 
 
 class TaskViewSet(viewsets.ModelViewSet):

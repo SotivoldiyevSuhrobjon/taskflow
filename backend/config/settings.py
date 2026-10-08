@@ -115,6 +115,12 @@ CORS_ALLOWED_ORIGINS = [
 CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 # Redissiz sinash uchun: CELERY_EAGER=true (task fon o'rniga darhol ishlaydi)
+CELERY_TASK_PUBLISH_RETRY_POLICY = {
+    "max_retries": 1,
+    "interval_start": 0,
+    "interval_step": 0.2,
+    "interval_max": 0.5,
+}
 CELERY_TASK_ALWAYS_EAGER = env_bool("CELERY_EAGER", False)
 
 # Ixtiyoriy tashqi bildirishnomalar
