@@ -18,13 +18,14 @@ taskflow/
 ```bash
 cp .env.example .env            # Windows: copy .env.example .env
 ```
-`.env` ichida: `POSTGRES_DB` qatorini o'chiring (SQLite ishlaydi) va Redis'siz sinash uchun `CELERY_EAGER=True` qiling.
+`.env` tayyor holda keladi: SQLite va `CELERY_EAGER=True` (Redis kerak emas).
 
 ```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate       # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+python manage.py makemigrations
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver      # http://localhost:8000
