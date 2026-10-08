@@ -110,3 +110,26 @@ git checkout -b feature/backend    # backend ishlari
 git checkout -b feature/frontend   # frontend ishlari
 git push -u origin feature/backend feature/frontend   # so'ng Pull Request orqali main'ga
 ```
+
+## 7. React frontend (`frontend-react/`)
+
+Oddiy HTML versiya bilan bir xil dizayn va funksiyalar, lekin React 18 + Vite + Axios + Context API.
+
+```bash
+cd frontend-react
+cp .env.example .env     # VITE_API_URL=http://localhost:8000/api
+npm install
+npm run dev              # http://localhost:5173
+```
+
+Docker bilan: `docker compose up --build` — React `http://localhost:5173`, oddiy HTML `http://localhost:3000`.
+
+Foydali buyruqlar: `npm run lint` (ESLint), `npm run format` (Prettier), `npm run build` (production).
+
+```
+src/
+├── api/            # axios client (JWT + auto-refresh), endpointlar
+├── context/        # AuthContext, TasksContext, NotificationsContext, ToastContext
+├── components/     # Header, NotificationBell, TaskBoard, TaskCard, TaskModal ...
+└── pages/          # AuthPage, Dashboard
+```
