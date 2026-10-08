@@ -3,69 +3,63 @@
 Foydalanuvchilar bir-biriga vazifa biriktiradi; yangi vazifa yaratilganda yoki statusi o'zgarganda
 tegishli foydalanuvchiga bildirishnoma boradi.
 
-- **Backend:** Python 3.12, Django 5, Django REST Framework, JWT (simplejwt), Celery + Redis, PostgreSQL
-- **Frontend:** React'siz — oddiy HTML + CSS + JavaScript (framework va build bosqichi yo'q)
-- **DevOps:** Docker Compose, `.env`
+- **Backend:** Python 3.12, Django 5, Django REST Framework, JWT (simplejwt), Celery + Redis, PostgreSQL yoki SQLite
+- **Frontend:** oddiy HTML + CSS + JavaScript (framework va build bosqichi yo'q)
 
 ```
 taskflow/
-├── backend/            # Django loyihasi (config, accounts, todos, notifications)
-├── frontend/           # index.html, css/, js/ (nginx yoki istalgan statik server)
-├── docker-compose.yml
+├── backend/        # Django loyihasi (config, accounts, todos, notifications)
+├── frontend/       # index.html, css/, js/
 └── .env.example
 ```
 
-## 1. Docker bilan ishga tushirish (tavsiya etiladi)
+## 1. Ishga tushirish (PyCharm yoki terminal)
 
 ```bash
-cp .env.example .env
-docker compose up --build
+cp .env.example .env            # Windows: copy .env.example .env
 ```
-
-| Xizmat | Manzil |
-|---|---|
-| Frontend | http://localhost:3000 |
-| API | http://localhost:8000/api/ |
-| Admin | http://localhost:8000/admin/ |
-
-Migratsiyalar backend konteyner ishga tushganda avtomatik bajariladi. Admin yaratish:
-`docker compose exec backend python manage.py createsuperuser`
-
-## 2. Docker'siz (lokal)
+`.env` ichida: `POSTGRES_DB` qatorini o'chiring (SQLite ishlaydi) va Redis'siz sinash uchun `CELERY_EAGER=True` qiling.
 
 ```bash
-cp .env.example .env            # POSTGRES_DB qatorini o'chirsangiz SQLite ishlaydi
 cd backend
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 python manage.py migrate
+python manage.py createsuperuser
 python manage.py runserver      # http://localhost:8000
 ```
-
-Redis va Celery worker (bildirishnomalar fonda yoziladi):
-
-```bash
-redis-server                                  # alohida terminal
-cd backend && celery -A config worker -l info # alohida terminal
-```
-
-Redis o'rnatishni xohlamasangiz, `.env` da `CELERY_EAGER=True` qo'ying — task darhol bajariladi.
 
 Frontend (alohida terminal):
 
 ```bash
-cd frontend && python -m http.server 3000     # http://localhost:3000
+cd frontend
+python -m http.server 3000      # http://localhost:3000
 ```
 
 Backend manzili boshqacha bo'lsa, `frontend/js/config.js` ichidagi `API_URL` ni o'zgartiring.
 
-## 3. Testlar
+## 2. Celery + Redis (haqiqiy fon rejimi)
+
+`.env` da `CELERY_EAGER=False`, Redis ishga tushgan bo'lishi kerak (`REDIS_URL`). Keyin alohida terminalda:
+
+```bash
+cd backend
+celery -A config worker -l info          # Windows: qo'shing  -P solo
+```
+
+## 3. PostgreSQL (ixtiyoriy)
+
+`.env` da `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT` ni to'ldiring,
+so'ng `python manage.py migrate`.
+
+## 4. Testlar
 
 ```bash
 cd backend && python manage.py test
 ```
 
-## 4. API
+## 5. API
 
 Barcha endpointlar (register/login dan tashqari) `Authorization: Bearer <access_token>` talab qiladi.
 
@@ -88,48 +82,21 @@ Barcha endpointlar (register/login dan tashqari) `Authorization: Bearer <access_
 - Foydalanuvchi faqat o'zi yaratgan yoki o'ziga biriktirilgan vazifalarni ko'radi (boshqasiniki — 404).
 - Status faqat bir qadam o'zgaradi (oldinga yoki orqaga); sakrash → 400.
 - Biriktirilgan foydalanuvchi faqat statusni o'zgartira oladi; qolgan maydonlarni faqat yaratuvchi (aks holda 403).
-- Bildirishnoma yaratiladi: vazifa biriktirilganda va status o'zgarganda (o'zgartirgan odamdan boshqa tomonga).
+- Bildirishnoma: vazifa biriktirilganda va status o'zgarganda (o'zgartirgan odamdan boshqa tomonga).
   Celery task `notifications.tasks.create_notification` bazaga yozadi, so'ng (ixtiyoriy) Email / Telegram yuboradi.
 
-## 5. Frontend imkoniyatlari
+## 6. Frontend imkoniyatlari
 
 - Login / Register, JWT `localStorage` da, har so'rovda `Authorization: Bearer ...`, 401 da avtomatik refresh.
-- Kanban / Cards / Table ko'rinishlari, status filtri (All, Pending, In progress, Completed), sarlavha bo'yicha qidiruv.
-- Yangi vazifa modali (boshqa foydalanuvchiga biriktirish), status tugmalari, o'chirish.
-- Qo'ng'iroqcha + o'qilmaganlar soni, ro'yxat, "Mark as read" / "Mark all as read".
-- Real-time: har 10 soniyada polling (`frontend/js/config.js` → `POLL_INTERVAL_MS`).
+- Kanban / Cards / Table ko'rinishlari, status filtri, sarlavha bo'yicha qidiruv.
+- Yangi vazifa modali, status tugmalari, o'chirish.
+- Qo'ng'iroqcha + o'qilmaganlar soni, "Mark as read" / "Mark all as read".
+- Har 10 soniyada polling (`frontend/js/config.js` → `POLL_INTERVAL_MS`).
 - Xatolar toast va forma ostida ko'rsatiladi.
 
-Sinash: ikkita brauzer oynasida (biri oddiy, biri inkognito) ikki foydalanuvchi yarating,
-biridan ikkinchisiga vazifa biriktiring — 10 soniya ichida qo'ng'iroqchada badge paydo bo'ladi.
-
-## 6. Git jarayoni
+## 7. Git jarayoni
 
 ```bash
-git checkout -b feature/backend    # backend ishlari
-git checkout -b feature/frontend   # frontend ishlari
-git push -u origin feature/backend feature/frontend   # so'ng Pull Request orqali main'ga
-```
-
-## 7. React frontend (`frontend-react/`)
-
-Oddiy HTML versiya bilan bir xil dizayn va funksiyalar, lekin React 18 + Vite + Axios + Context API.
-
-```bash
-cd frontend-react
-cp .env.example .env     # VITE_API_URL=http://localhost:8000/api
-npm install
-npm run dev              # http://localhost:5173
-```
-
-Docker bilan: `docker compose up --build` — React `http://localhost:5173`, oddiy HTML `http://localhost:3000`.
-
-Foydali buyruqlar: `npm run lint` (ESLint), `npm run format` (Prettier), `npm run build` (production).
-
-```
-src/
-├── api/            # axios client (JWT + auto-refresh), endpointlar
-├── context/        # AuthContext, TasksContext, NotificationsContext, ToastContext
-├── components/     # Header, NotificationBell, TaskBoard, TaskCard, TaskModal ...
-└── pages/          # AuthPage, Dashboard
+git remote add origin <repo-url>
+git push -u origin main feature/backend feature/frontend
 ```
