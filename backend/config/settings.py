@@ -114,6 +114,13 @@ CORS_ALLOWED_ORIGINS = [
 # Celery + Redis
 CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+# Muddat eslatmasi: Celery Beat har soatda (celery -A config beat -l info)
+CELERY_BEAT_SCHEDULE = {
+    "due-reminders": {
+        "task": "notifications.tasks.send_due_reminders",
+        "schedule": 3600.0,
+    }
+}
 # Redissiz sinash uchun: CELERY_EAGER=true (task fon o'rniga darhol ishlaydi)
 CELERY_TASK_PUBLISH_RETRY_POLICY = {
     "max_retries": 1,

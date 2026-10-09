@@ -83,16 +83,20 @@ const api = {
   register: (payload) => request("/auth/register/", { method: "POST", body: payload, auth: false }),
   me: () => request("/auth/me/"),
   users: () => request("/users/"),
-  tasks: (status, title) => {
+  tasks: (params = {}) => {
     const q = new URLSearchParams();
-    if (status) q.set("status", status);
-    if (title) q.set("title", title);
+    Object.entries(params).forEach(([k, v]) => v && q.set(k, v));
     const qs = q.toString();
     return request(`/tasks/${qs ? "?" + qs : ""}`);
   },
   createTask: (payload) => request("/tasks/", { method: "POST", body: payload }),
+  patchTask: (id, payload) => request(`/tasks/${id}/`, { method: "PATCH", body: payload }),
   setStatus: (id, status) => request(`/tasks/${id}/`, { method: "PATCH", body: { status } }),
   deleteTask: (id) => request(`/tasks/${id}/`, { method: "DELETE" }),
+  labels: () => request("/labels/"),
+  createLabel: (payload) => request("/labels/", { method: "POST", body: payload }),
+  comments: (id) => request(`/tasks/${id}/comments/`),
+  addComment: (id, text) => request(`/tasks/${id}/comments/`, { method: "POST", body: { text } }),
   notifications: () => request("/notifications/"),
   markRead: (id) => request(`/notifications/${id}/read/`, { method: "PATCH" }),
   markAllRead: () => request("/notifications/read-all/", { method: "PATCH" }),

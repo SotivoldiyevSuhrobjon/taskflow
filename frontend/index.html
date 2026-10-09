@@ -73,8 +73,11 @@
         <button class="tab" data-status="in_progress">In progress</button>
         <button class="tab" data-status="completed">Completed</button>
       </div>
-      <input id="search" type="search" placeholder="Search by title" aria-label="Search by title">
-      <button id="new-task" class="btn primary">New task</button>
+      <div class="toolbar-tools">
+        <select id="label-filter" aria-label="Filter by label"><option value="">All labels</option></select>
+        <input id="search" type="search" placeholder="Search by title" aria-label="Search by title">
+        <button id="new-task" class="btn primary">New task</button>
+      </div>
     </div>
     <div id="board" aria-live="polite"></div>
   </main>
@@ -85,10 +88,14 @@
   <form id="task-form" class="form" method="dialog" novalidate>
     <h2>New task</h2>
     <label>Title<input name="title" maxlength="200" required></label>
-    <label>Description<textarea name="description" rows="3"></textarea></label>
+    <label>Description<textarea name="description" rows="3" maxlength="2000"></textarea></label>
     <div class="row">
       <label>Assign to<select name="assigned_to" id="assignee"></select></label>
       <label>Due date<input name="due_date" type="date"></label>
+    </div>
+    <div class="field">
+      <span class="field-label">Labels</span>
+      <div id="create-labels" class="chips"></div>
     </div>
     <p class="form-error" role="alert"></p>
     <div class="dialog-actions">
@@ -98,8 +105,42 @@
   </form>
 </dialog>
 
+<!-- ============ TASK DETAIL ============ -->
+<dialog id="detail-dialog" class="detail-dialog">
+  <div class="detail">
+    <header class="detail-head">
+      <h2 id="d-title"></h2>
+      <button type="button" class="icon-close" id="d-close" aria-label="Close">&times;</button>
+    </header>
+    <div id="d-meta" class="detail-meta"></div>
+    <p id="d-desc" class="detail-desc"></p>
+    <div id="d-actions" class="actions"></div>
+
+    <section class="detail-section">
+      <h3>Labels</h3>
+      <div id="d-labels" class="chips"></div>
+      <form id="label-form" class="inline-form" novalidate>
+        <input name="name" maxlength="30" placeholder="New label" aria-label="New label name">
+        <input name="color" type="color" value="#2563c9" aria-label="Label color">
+        <button class="btn sm" type="submit">Add</button>
+      </form>
+    </section>
+
+    <section class="detail-section">
+      <h3>Comments</h3>
+      <ul id="d-comments" class="comments"></ul>
+      <form id="comment-form" class="form">
+        <textarea name="text" rows="2" maxlength="1000" placeholder="Write a comment" aria-label="Comment"></textarea>
+        <p class="form-error" role="alert"></p>
+        <button class="btn primary" type="submit">Send</button>
+      </form>
+    </section>
+  </div>
+</dialog>
+
 <div id="toasts" aria-live="assertive"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/app.js"></script>

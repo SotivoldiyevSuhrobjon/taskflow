@@ -1,11 +1,13 @@
 import json
 import logging
 import urllib.request
+from datetime import timedelta
 
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
+from django.utils import timezone
 
 from .models import Notification
 
@@ -41,3 +43,31 @@ def create_notification(user_id, message):
         except Exception:  # tashqi xizmat xatosi asosiy jarayonni buzmasin
             logger.exception("External notification failed")
     return notification.id
+
+
+@shared_task
+def send_due_reminders():
+    """Muddati bugun/ertaga yoki o'tib ketgan, tugallanmagan vazifalar uchun bir martalik eslatma.
+
+    Celery Beat har soatda ishga tushiradi. Beat bo'lmasa:
+    `python manage.py send_due_reminders` (cron yoki PythonAnywhere Scheduled tasks).
+    """
+    from todos.models import Task  # circular import'dan qochish uchun
+
+    today = timezone.localdate()
+    tomorrow = today + timedelta(days=1)
+    tasks = Task.objects.filter(due_date__lte=tomorrow, due_reminder_sent=False).exclude(
+        status=Task.Status.COMPLETED
+    )
+    sent = 0
+    for task in tasks:
+        if task.due_date < today:
+            text = f'Overdue: "{task.title}" was due {task.due_date}'
+        elif task.due_date == today:
+            text = f'Due today: "{task.title}"'
+        else:
+            text = f'Due tomorrow: "{task.title}"'
+        create_notification(task.assigned_to_id or task.created_by_id, text)
+        Task.objects.filter(pk=task.pk).update(due_reminder_sent=True)
+        sent += 1
+    return sent
