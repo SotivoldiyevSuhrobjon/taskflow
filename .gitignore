@@ -6,3 +6,11 @@ __pycache__/
 venv/
 .idea/
 .vscode/
+
+__pycache__/
+*.pyc
+.venv/
+.env
+db.sqlite3
+staticfiles/
+node_modules/

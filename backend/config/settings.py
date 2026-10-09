@@ -114,6 +114,13 @@ CORS_ALLOWED_ORIGINS = [
 # Celery + Redis
 CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+# Muddat eslatmasi: Celery Beat har soatda (celery -A config beat -l info)
+CELERY_BEAT_SCHEDULE = {
+    "due-reminders": {
+        "task": "notifications.tasks.send_due_reminders",
+        "schedule": 3600.0,
+    }
+}
 # Redissiz sinash uchun: CELERY_EAGER=true (task fon o'rniga darhol ishlaydi)
 CELERY_TASK_PUBLISH_RETRY_POLICY = {
     "max_retries": 1,
@@ -134,6 +141,6 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", False)
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@taskflow.local")
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = os.getenv("STATIC_ROOT", str(BASE_DIR / "staticfiles"))
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 CSRF_TRUSTED_ORIGINS = [o for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o]
